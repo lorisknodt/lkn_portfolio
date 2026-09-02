@@ -12,8 +12,6 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Ouvre → **http://localhost:8000**
-
 ## Fonctionnalités
 
 - 🌌 Système de particules interactif (canvas WebGL-style)
