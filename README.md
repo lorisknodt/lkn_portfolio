@@ -36,15 +36,3 @@ portfolio_v2/
     ├── css/style.css     ← Design system complet
     └── js/main.js        ← Toutes les animations
 ```
-
-## Personnaliser
-
-Tout le contenu est dans `main.py` → dictionnaire `data`.
-Pour ajouter un projet : ajoute un élément à la liste `projects`.
-
-## Déployer sur Render
-
-1. Push sur GitHub
-2. render.com → New Web Service
-3. Build : `pip install -r requirements.txt`
-4. Start : `uvicorn main:app --host 0.0.0.0 --port $PORT`
