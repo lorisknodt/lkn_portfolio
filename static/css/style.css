@@ -68,8 +68,7 @@ html {
   scroll-padding-top: 56px;
   -webkit-text-size-adjust: 100%;
 }
-html:has(dialog[open]),
-html.menu-open { overflow: hidden; }
+html.scroll-locked { overflow: hidden; scroll-behavior: auto; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -1141,8 +1140,9 @@ html:not(.js) .statement-text .w,
   .tile--about, .tile--lang, .tile--loc { grid-column: 1 / -1; }
   .tile--about { padding: 28px; min-height: 380px; }
   .tile--gh { grid-column: 1 / -1; }
-  .lang-list li { grid-template-columns: 4.5rem 1fr; }
-  .lang-level { grid-column: 2; text-align: left; margin-top: -.6rem; }
+  .lang-list { grid-template-columns: auto 1fr; row-gap: .5rem; }
+  .lang-level { grid-column: 2; text-align: left; margin: -.35rem 0 .45rem; }
+  .about-orbit { right: -130px; bottom: -150px; opacity: .5; }
   .radar { width: 130px; margin: -22px -22px -22px auto; }
 
   .projects { grid-template-columns: 1fr; gap: 16px; }

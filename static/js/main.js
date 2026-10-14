@@ -17,18 +17,49 @@ document.getElementById('theme-btn').addEventListener('click', () => {
   shader?.setTheme(next === 'light');
 });
 
+// ── Scroll lock (dialogs + mobile menu) ──────────────────
+// overflow:hidden on <html> keeps the page still behind an overlay. Some
+// engines move the page when it closes (toggling the lock, restoring focus),
+// so remember where the reader was and put them back exactly there.
+// While locked, scroll-behavior is 'auto' (see CSS): any such jump is then
+// instant and visible to the check below, never a slow glide to the top.
+let lockedY = 0;
+
+function lockScroll() {
+  lockedY = scrollY;
+  root.classList.add('scroll-locked');
+}
+
+function unlockScroll({ settle = true } = {}) {
+  if (!root.classList.contains('scroll-locked')) return;
+  const restore = () => {
+    if (Math.abs(scrollY - lockedY) >= 1) scrollTo({ top: lockedY, behavior: 'instant' });
+  };
+  root.style.scrollBehavior = 'auto';
+  root.classList.remove('scroll-locked');
+  restore();
+  if (!settle) { root.style.scrollBehavior = ''; return; } // let an anchor link glide
+  // Catch engines that only move the page a frame or two later.
+  requestAnimationFrame(() => {
+    restore();
+    requestAnimationFrame(() => { restore(); root.style.scrollBehavior = ''; });
+  });
+}
+
 // ── Nav: glass on scroll, active section, mobile menu ────
 const nav    = document.getElementById('nav');
 const burger = document.getElementById('burger');
 
-function setMenu(open) {
+function setMenu(open, { navigating = false } = {}) {
+  if (open === nav.classList.contains('open')) return;
   nav.classList.toggle('open', open);
-  root.classList.toggle('menu-open', open);
+  if (open) lockScroll();
+  else unlockScroll({ settle: !navigating }); // let an anchor link scroll freely
   burger.setAttribute('aria-expanded', String(open));
   burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
 }
 burger.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
-document.querySelectorAll('.mobile-menu a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+document.querySelectorAll('.mobile-menu a').forEach(a => a.addEventListener('click', () => setMenu(false, { navigating: true })));
 addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) setMenu(false); });
 matchMedia('(min-width: 761px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
 
@@ -161,28 +192,35 @@ let lastTrigger = null;
 
 function closeDialog(dlg) {
   if (!dlg.open || dlg.classList.contains('closing')) return;
+  if (reduced) return dlg.close();
   dlg.classList.add('closing');
+  const onEnd = e => { if (e.target === dlg) done(); }; // ignore animations inside the visual
   const done = () => {
-    dlg.classList.remove('closing');
-    dlg.close();
-    lastTrigger?.focus({ preventScroll: true });
+    dlg.removeEventListener('animationend', onEnd);
+    if (dlg.open && dlg.classList.contains('closing')) dlg.close(); // not if reopened meanwhile
   };
-  if (reduced) return done();
-  dlg.addEventListener('animationend', done, { once: true });
-  setTimeout(() => { if (dlg.open) done(); }, 450); // safety net
+  dlg.addEventListener('animationend', onEnd);
+  setTimeout(done, 450); // safety net
 }
 
 document.querySelectorAll('[data-open]').forEach(btn => {
   btn.addEventListener('click', () => {
     const dlg = document.getElementById(btn.dataset.open);
-    if (!dlg) return;
+    if (!dlg || dlg.open) return;
     lastTrigger = btn;
+    lockScroll();
     dlg.showModal();
     dlg.scrollTop = 0;
   });
 });
 
 document.querySelectorAll('dialog.modal').forEach(dlg => {
+  // However the dialog ends up closed (animation, Esc, back gesture), clean up here.
+  dlg.addEventListener('close', () => {
+    dlg.classList.remove('closing');
+    lastTrigger?.focus({ preventScroll: true });
+    unlockScroll();
+  });
   dlg.addEventListener('cancel', e => { e.preventDefault(); closeDialog(dlg); });
   dlg.addEventListener('click', e => {
     if (e.target === dlg || e.target.closest('[data-close]')) closeDialog(dlg);
