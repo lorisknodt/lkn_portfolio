@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,12 +13,15 @@ data = {
     "name": "Loris Knodt",
     "title": "Computer Systems Architecture",
     "tagline": "Building systems at the edge of software & hardware.",
-    "about": (
-        "23-year-old student in the Master's in Computer Systems Architecture at HEPL, Liège. "
-        "I build things across mobile, AI, IoT and backend — "
-        "from neural networks and Kotlin apps to FastAPI backends and Flutter experiences. "
-        "Looking for a first opportunity starting January 2027."
+    "about": "23-year-old student in the Master's in Computer Systems Architecture at HEPL, Liège.",
+    # Scroll-driven statement below the hero. Words wrapped in *asterisks* get the accent gradient.
+    "statement": (
+        "I build things across mobile, AI, IoT and backend — from neural networks "
+        "and Kotlin apps to FastAPI backends and Flutter experiences. "
+        "I'm drawn to projects where *disciplines* *meet.*"
     ),
+    "tagline_highlight": "software & hardware",
+    "available": "January 2027",
     "contact": {
         "email": "loris.knodt@gmail.com",
         "phone": "+32 497 93 95 40",
@@ -34,6 +39,7 @@ data = {
     "projects": [
         {
             "id": "feastly",
+            "visual": "feastly", "accent": "#00B4AB",
             "name": "Feastly",
             "tagline": "Find the right place for the right mood.",
             "description": (
@@ -49,6 +55,7 @@ data = {
         },
         {
             "id": "iot2",
+            "visual": "shop", "accent": "#A97BFF",
             "name": "CLM Shop",
             "tagline": "Full e-commerce Android app with 3DSecure.",
             "description": (
@@ -63,6 +70,7 @@ data = {
         },
         {
             "id": "ann",
+            "visual": "ann", "accent": "#FF8A3D",
             "name": "ANN — Neural Network",
             "tagline": "Trained & optimized Keras neural network.",
             "description": (
@@ -77,6 +85,7 @@ data = {
         },
         {
             "id": "vr",
+            "visual": "vr", "accent": "#3DDC84",
             "name": "VR Horror Game",
             "tagline": "Immersive VR horror experience in Unity.",
             "description": (
@@ -136,6 +145,20 @@ data = {
 }
 
 
+def view_data() -> dict:
+    """Derive the small presentation helpers the template needs from `data`."""
+    before, hl, after = data["tagline"].partition(data["tagline_highlight"])
+    return {
+        **data,
+        "tagline_parts": (before, hl, after),
+        "statement_words": [
+            {"text": w.strip("*"), "hl": w.startswith("*")}
+            for w in data["statement"].split()
+        ],
+        "year": date.today().year,
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, **data})
+    return templates.TemplateResponse(request, "index.html", view_data())

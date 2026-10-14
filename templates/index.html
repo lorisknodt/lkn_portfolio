@@ -2,268 +2,398 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ name }}</title>
-  <meta name="description" content="{{ title }} — {{ tagline }}"/>
-  <link rel="stylesheet" href="/static/css/style.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>"/>
-</head>
-<body>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>{{ name }} — {{ title }}</title>
+  <meta name="description" content="{{ name }} · {{ title }} — {{ tagline }}"/>
+  <meta property="og:title" content="{{ name }} — {{ title }}"/>
+  <meta property="og:description" content="{{ tagline }}"/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23000'/><text x='32' y='42' font-family='-apple-system,Helvetica,Arial' font-size='26' font-weight='700' fill='%23fff' text-anchor='middle'>LK</text></svg>"/>
 
-<canvas id="particle-canvas"></canvas>
+  <script>
+    // Set theme + JS flag before first paint (no flash).
+    (function () {
+      var d = document.documentElement, t = 'dark';
+      try { t = localStorage.getItem('theme') || 'dark'; } catch (e) {}
+      d.setAttribute('data-theme', t);
+      d.classList.add('js');
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduced');
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"/>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body id="top">
+
+<a class="skip-link" href="#about">Skip to content</a>
 
 <!-- ── Nav ──────────────────────────────────────────────── -->
-<nav>
+<header class="nav" id="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="#hero">{{ name.split()[0][0] }}{{ name.split()[1][0] }}</a>
-    <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#skills">Skills</a></li>
-      <li><a href="#projects">Projects</a></li>
-      <li><a href="#experience">Work</a></li>
-      <li><a href="#contact">Contact</a></li>
-      <li>
-        <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme">
-          <!-- Moon (dark mode) -->
-          <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <!-- Sun (light mode) -->
-          <svg class="icon-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1"  x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22"  x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"/>
-          </svg>
-        </button>
-      </li>
-    </ul>
+    <a class="nav-logo" href="#top" aria-label="{{ name }} — back to top">{{ name.split()[0][0] }}{{ name.split()[1][0] }}</a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#projects">Work</a>
+      <a href="#skills">Toolkit</a>
+      <a href="#journey">Journey</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="icon-btn theme-toggle" id="theme-btn" type="button" aria-label="Toggle light and dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <a class="nav-cta" href="#contact">Contact</a>
+      <button class="icon-btn nav-burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span>
+      </button>
+    </div>
   </div>
-</nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <nav aria-label="Mobile">
+      <a href="#about">About</a>
+      <a href="#projects">Work</a>
+      <a href="#skills">Toolkit</a>
+      <a href="#journey">Journey</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
 
 <main>
 
 <!-- ── Hero ─────────────────────────────────────────────── -->
-<section id="hero">
-  <canvas id="hero-canvas"></canvas>
-  <div class="hero-content">
-  <p class="hero-label">Available · January 2027</p>
-  <h1 class="hero-name">{{ name }}</h1>
-  <p class="hero-sub">{{ tagline }}</p>
-  <div class="hero-actions">
-    <a href="#projects" class="btn btn-solid">View projects</a>
-    <a href="#contact"  class="btn btn-outline">Get in touch</a>
+<section class="hero" id="hero" aria-label="Introduction">
+  <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-fallback" aria-hidden="true"></div>
+
+  <div class="hero-content" id="hero-content">
+    <p class="status-pill">
+      <span class="status-dot" aria-hidden="true"></span>
+      Available from {{ available }}
+    </p>
+
+    <h1 class="hero-name" aria-label="{{ name }}">
+      {%- set ns = namespace(i=0) -%}
+      {%- for word in name.split() -%}
+      <span class="word" aria-hidden="true">
+        {%- for ch in word -%}<span class="ch" style="--i:{{ ns.i }}">{{ ch }}</span>{%- set ns.i = ns.i + 1 -%}{%- endfor -%}
+      </span>{% if not loop.last %} {% endif %}
+      {%- endfor -%}
+    </h1>
+
+    <p class="hero-tagline">
+      {{ tagline_parts[0] }}<span class="grad">{{ tagline_parts[1] }}</span>{{ tagline_parts[2] }}
+    </p>
+
+    <div class="hero-actions">
+      <a href="#projects" class="btn btn-primary">See my work</a>
+      <a href="#contact" class="btn btn-ghost">
+        Get in touch
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </div>
   </div>
-  </div><!-- /hero-content -->
-  <div class="hero-scroll">
-    <div class="hero-scroll-line"></div>
+
+  <div class="hero-meta" aria-hidden="true">
+    <span>{{ title }}</span>
+    <span class="hero-scroll">Scroll<i></i></span>
+    <span>{{ contact.location }}</span>
   </div>
 </section>
 
-<!-- ── About ─────────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="about">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">About</p>
-    <div class="about-split">
-      <div>
-        <h2 class="sec-title reveal">Engineering<br>meets curiosity.</h2>
-        <div class="about-body reveal">
-          <p>{{ about }}</p>
-          <p>My work spans <strong>mobile development</strong> (Flutter, Kotlin), <strong>machine learning</strong> (Keras), <strong>IoT systems</strong> and <strong>full-stack web</strong>. I'm drawn to projects where disciplines meet.</p>
-        </div>
-      </div>
-      <div class="stats reveal">
-        <div class="stat">
-          <div class="stat-n" data-target="5" data-suffix="+">0+</div>
-          <div class="stat-l">Years studying IT</div>
-        </div>
-        <div class="stat">
-          <div class="stat-n" data-target="10" data-suffix="+">0</div>
-          <div class="stat-l">GitHub projects</div>
-        </div>
-        <div class="stat">
-          <div class="stat-n" data-target="3">0</div>
-          <div class="stat-l">Languages spoken</div>
-        </div>
-        <div class="stat">
-          <div class="stat-n" data-target="120">0</div>
-          <div class="stat-l">ECTS credits</div>
-        </div>
-      </div>
+<!-- ── Statement (scroll-scrubbed) ──────────────────────── -->
+<section class="statement" id="statement" aria-label="Statement">
+  <div class="statement-sticky">
+    <div class="container">
+      <p class="statement-text">
+        {%- for w in statement_words -%}
+        <span class="w{% if w.hl %} grad{% endif %}">{{ w.text }}</span>{% if not loop.last %} {% endif %}
+        {%- endfor -%}
+      </p>
     </div>
   </div>
 </section>
 
-<!-- ── Skills ────────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="skills">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">Skills</p>
-    <h2 class="sec-title reveal">What I work with.</h2>
-    <div class="skills-list">
-      {% for s in skills %}
-      <div class="skill-item reveal">
-        <div class="skill-cat">{{ s.category }}</div>
-        <div class="skill-tags">
-          {% for t in s.techs %}
-          <span class="skill-tag">{{ t }}</span>
-          {% endfor %}
+<!-- ── About (bento) ────────────────────────────────────── -->
+<section class="sec" id="about">
+  <div class="container">
+    <header class="sec-head">
+      <p class="eyebrow reveal">About</p>
+      <h2 class="sec-title reveal">Engineering<br>meets curiosity.</h2>
+    </header>
+
+    <div class="bento">
+      <article class="tile tile--about spot reveal">
+        <p class="tile-label">Who I am</p>
+        <p class="tile-lead">{{ about }}</p>
+        <p class="tile-body">My work spans <strong>mobile development</strong> (Flutter, Kotlin), <strong>machine learning</strong> (Keras), <strong>IoT systems</strong> and <strong>full-stack web</strong> — with hands-on hardware experience from years in industrial assembly.</p>
+        <div class="about-orbit" aria-hidden="true">
+          <span></span><span></span><span></span>
         </div>
-      </div>
-      {% endfor %}
+      </article>
+
+      <article class="tile tile--stat spot reveal">
+        <p class="tile-label">Master's programme</p>
+        <p class="big-num grad"><span data-count="120">120</span></p>
+        <p class="tile-caption">ECTS credits in Computer Systems Architecture.</p>
+      </article>
+
+      <article class="tile tile--stat spot reveal">
+        <p class="tile-label">Background</p>
+        <p class="big-num"><span data-count="5">5</span>+</p>
+        <p class="tile-caption">Years studying IT — bachelor to master.</p>
+      </article>
+
+      <article class="tile tile--lang spot reveal">
+        <p class="tile-label">Languages</p>
+        <ul class="lang-list">
+          {% for l in languages %}
+          <li>
+            <span class="lang-name">{{ l.lang }}</span>
+            <span class="lang-bar" aria-hidden="true"><i data-pct="{{ l.pct }}"></i></span>
+            <span class="lang-level">{{ l.level }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="tile tile--loc spot reveal">
+        <div>
+          <p class="tile-label">Based in</p>
+          <p class="tile-title">{{ contact.location }}</p>
+          <p class="tile-caption">Open to Belgium, Luxembourg and beyond.</p>
+        </div>
+        <div class="radar" aria-hidden="true">
+          <span class="radar-ring"></span><span class="radar-ring"></span><span class="radar-ring"></span>
+          <span class="radar-dot"></span>
+        </div>
+      </article>
+
+      <article class="tile tile--avail spot reveal">
+        <p class="tile-label"><span class="status-dot" aria-hidden="true"></span> Available</p>
+        <p class="tile-title">{{ available }}</p>
+        <p class="tile-caption">Looking for a first opportunity.</p>
+      </article>
+
+      <a class="tile tile--gh spot reveal" href="{{ contact.github }}" target="_blank" rel="noopener">
+        <p class="tile-label">On GitHub</p>
+        <p class="big-num"><span data-count="10">10</span>+</p>
+        <p class="tile-caption">Projects &amp; repositories</p>
+        <span class="tile-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg>
+        </span>
+      </a>
     </div>
   </div>
 </section>
 
 <!-- ── Projects ──────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="projects">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">Projects</p>
-    <h2 class="sec-title reveal">Things I've built.</h2>
-    <p class="sec-lead reveal">A selection of personal and academic projects — each one a chance to explore something new.</p>
-    <div class="projects-grid">
+<section class="sec" id="projects">
+  <div class="container">
+    <header class="sec-head">
+      <p class="eyebrow reveal">Selected work</p>
+      <h2 class="sec-title reveal">Things I've built.</h2>
+      <p class="sec-lead reveal">A selection of personal and academic projects — each one a chance to explore something new.</p>
+    </header>
+
+    <div class="projects">
       {% for p in projects %}
-      <div class="proj reveal">
-        <div class="proj-meta">
-          <span class="proj-type">{{ p.type }}</span>
-          <span class="proj-lang">
-            <span class="lang-dot" style="background:{{ p.lang_color }}"></span>
-            {{ p.lang }}
-          </span>
+      <article class="proj proj--{{ p.visual }}{% if loop.first %} proj--featured{% endif %} spot reveal" style="--pc: {{ p.accent }}">
+        <div class="proj-text">
+          <p class="proj-type">{{ p.type }}</p>
+          <h3 class="proj-name">{{ p.name }}</h3>
+          <p class="proj-tagline">{{ p.tagline }}</p>
+          {% if loop.first %}
+          <ul class="proj-hl">
+            {% for h in p.highlights %}<li>{{ h }}</li>{% endfor %}
+          </ul>
+          {% endif %}
         </div>
-        <div class="proj-name">{{ p.name }}</div>
-        <div class="proj-tagline">{{ p.tagline }}</div>
-        <p class="proj-desc">{{ p.description }}</p>
-        <div class="proj-highlights">
-          {% for h in p.highlights %}
-          <span class="proj-hl">{{ h }}</span>
+        <div class="proj-visual" aria-hidden="true">
+          {% include "visuals/" ~ p.visual ~ ".html" %}
+        </div>
+        <button class="proj-hit" type="button" data-open="dlg-{{ p.id }}" aria-haspopup="dialog" aria-label="More about {{ p.name }}">
+          <span class="plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Toolkit ───────────────────────────────────────────── -->
+<section class="sec" id="skills">
+  <div class="container">
+    <header class="sec-head">
+      <p class="eyebrow reveal">Toolkit</p>
+      <h2 class="sec-title reveal">What I work with.</h2>
+    </header>
+
+    <ul class="toolkit">
+      {% for s in skills %}
+      <li class="tk-row reveal">
+        <span class="tk-idx">{{ "%02d"|format(loop.index) }}</span>
+        <span class="tk-cat">{{ s.category }}</span>
+        <span class="tk-techs">
+          {%- for t in s.techs -%}
+          <span>{{ t }}{% if not loop.last %}<i>,</i>{% endif %}</span>
+          {%- endfor -%}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ── Journey ───────────────────────────────────────────── -->
+<section class="sec" id="journey">
+  <div class="container">
+    <header class="sec-head">
+      <p class="eyebrow reveal">Journey</p>
+      <h2 class="sec-title reveal">Where I've been.</h2>
+    </header>
+
+    <div class="journey">
+      <div class="journey-col">
+        <h3 class="journey-head reveal">Experience</h3>
+        <div class="timeline">
+          <span class="timeline-fill" aria-hidden="true"></span>
+          <ol>
+          {% for e in experience %}
+          <li class="tl-item reveal">
+            <p class="tl-period">{{ e.period }}</p>
+            <h4 class="tl-title">{{ e.role }}</h4>
+            <p class="tl-org">{{ e.company }} · {{ e.location }}</p>
+            <p class="tl-desc">{{ e.description }}</p>
+            <p class="tl-tags">{% for t in e.tags %}<span>{{ t }}</span>{% endfor %}</p>
+          </li>
           {% endfor %}
+          </ol>
         </div>
-        <div class="proj-tech">
-          {% for t in p.tech %}
-          <span class="proj-tech-tag">{{ t }}</span>
+      </div>
+
+      <div class="journey-col">
+        <h3 class="journey-head reveal">Education</h3>
+        <div class="timeline">
+          <span class="timeline-fill" aria-hidden="true"></span>
+          <ol>
+          {% for e in education %}
+          <li class="tl-item reveal">
+            <p class="tl-period">{{ e.period }}</p>
+            <h4 class="tl-title">{{ e.degree }}</h4>
+            <p class="tl-org">{{ e.school }}</p>
+            {% if e.details %}<p class="tl-desc">{{ e.details }}</p>{% endif %}
+          </li>
           {% endfor %}
-        </div>
-        <div class="proj-footer">
-          <a href="{{ p.github }}" target="_blank" rel="noopener" class="proj-link">
-            View on GitHub
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </a>
+          </ol>
         </div>
       </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<!-- ── Experience ────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="experience">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">Experience</p>
-    <h2 class="sec-title reveal">Where I've worked.</h2>
-    <div class="exp-list">
-      {% for e in experience %}
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-role">{{ e.role }}</div>
-          <div class="exp-company">{{ e.company }} · {{ e.location }}</div>
-          <p class="exp-desc">{{ e.description }}</p>
-          <div class="exp-tags">
-            {% for t in e.tags %}
-            <span class="exp-tag">{{ t }}</span>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="exp-period">{{ e.period }}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<!-- ── Education ─────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="education">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">Education</p>
-    <h2 class="sec-title reveal">Academic background.</h2>
-    <div class="edu-list">
-      {% for e in education %}
-      <div class="edu-item reveal">
-        <div>
-          <div class="edu-degree">{{ e.degree }}</div>
-          <div class="edu-school">{{ e.school }}</div>
-          {% if e.details %}<div class="edu-details">{{ e.details }}</div>{% endif %}
-        </div>
-        <div class="edu-period">{{ e.period }}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<!-- ── Languages ─────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="languages">
-  <div class="container sec">
-    <p class="sec-eyebrow reveal">Languages</p>
-    <h2 class="sec-title reveal">How I communicate.</h2>
-    <div class="lang-list">
-      {% for l in languages %}
-      <div class="lang-row reveal">
-        <div class="lang-top">
-          <span class="lang-name">{{ l.lang }}</span>
-          <span class="lang-level">{{ l.level }}</span>
-        </div>
-        <div class="lang-track">
-          <div class="lang-fill" data-pct="{{ l.pct }}"></div>
-        </div>
-      </div>
-      {% endfor %}
     </div>
   </div>
 </section>
 
 <!-- ── Contact ───────────────────────────────────────────── -->
-<div class="sec-divider"></div>
-<section id="contact">
+<section class="contact" id="contact">
+  <div class="contact-glow" aria-hidden="true"></div>
   <div class="container">
-    <p class="sec-eyebrow reveal" style="text-align:center;justify-content:center">Contact</p>
-    <h2 class="contact-title reveal">Let's talk.</h2>
-    <p class="contact-sub reveal">Open to first opportunities in Belgium, Luxembourg and beyond.</p>
+    <p class="eyebrow reveal">Contact</p>
+    <h2 class="contact-title reveal">Let's build something <span class="grad">together.</span></h2>
+    <p class="contact-sub reveal">Open to first opportunities in Belgium, Luxembourg and beyond — starting {{ available }}.</p>
+
     <div class="contact-actions reveal">
-      <a href="mailto:{{ contact.email }}" class="btn btn-solid">{{ contact.email }}</a>
-      <a href="{{ contact.github }}" target="_blank" class="btn btn-outline">GitHub ↗</a>
+      <a href="mailto:{{ contact.email }}" class="btn btn-primary btn-lg">{{ contact.email }}</a>
+      <button class="btn btn-ghost btn-lg" type="button" id="copy-email" data-email="{{ contact.email }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+        <span>Copy email</span>
+      </button>
     </div>
-    <div class="contact-chips reveal">
-      <span class="chip">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.79-1.79a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        {{ contact.phone }}
-      </span>
-      <span class="chip">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        {{ contact.location }}
-      </span>
-    </div>
+
+    <ul class="contact-links reveal">
+      <li>
+        <a href="{{ contact.github }}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a10.9 10.9 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+          GitHub
+        </a>
+      </li>
+      <li>
+        <a href="tel:{{ contact.phone|replace(' ', '') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          {{ contact.phone }}
+        </a>
+      </li>
+      <li>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ contact.location }}
+        </span>
+      </li>
+    </ul>
   </div>
 </section>
 
 </main>
 
-<footer>
-  <p>{{ name }} · {{ title }} · 2026</p>
+<footer class="footer">
+  <div class="container footer-inner">
+    <p>© {{ year }} {{ name }}</p>
+    <p>{{ title }} · HEPL, Liège</p>
+    <a href="#top" class="footer-top">Back to top ↑</a>
+  </div>
 </footer>
+
+<!-- ── Project detail dialogs ────────────────────────────── -->
+{% for p in projects %}
+<dialog class="modal" id="dlg-{{ p.id }}" aria-labelledby="dlg-{{ p.id }}-title" style="--pc: {{ p.accent }}">
+  <div class="modal-panel">
+    <button class="modal-close icon-btn" type="button" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+
+    <div class="modal-head">
+      <p class="proj-type">
+        {{ p.type }}
+        <span class="modal-lang"><span class="lang-dot" style="background: {{ p.lang_color }}"></span>{{ p.lang }}</span>
+      </p>
+      <h3 class="modal-title" id="dlg-{{ p.id }}-title">{{ p.name }}</h3>
+      <p class="modal-tagline">{{ p.tagline }}</p>
+    </div>
+
+    <div class="modal-visual proj--{{ p.visual }}" aria-hidden="true">
+      {% include "visuals/" ~ p.visual ~ ".html" %}
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-desc">{{ p.description }}</p>
+      <div class="modal-grid">
+        <div>
+          <h4>Highlights</h4>
+          <ul class="modal-list">
+            {% for h in p.highlights %}<li>{{ h }}</li>{% endfor %}
+          </ul>
+        </div>
+        <div>
+          <h4>Built with</h4>
+          <p class="modal-tags">{% for t in p.tech %}<span>{{ t }}</span>{% endfor %}</p>
+        </div>
+      </div>
+      <a href="{{ p.github }}" target="_blank" rel="noopener" class="btn btn-primary">
+        View on GitHub
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg>
+      </a>
+    </div>
+  </div>
+</dialog>
+{% endfor %}
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module" src="/static/js/main.js"></script>
 </body>
