@@ -71,6 +71,7 @@ html {
      must not change when the lock below toggles, or Firefox rebuilds the page
      scroller and can drop the reader back at the top. */
   overflow-x: clip;
+  scrollbar-gutter: stable; /* no sideways jolt when the lock hides the scrollbar */
 }
 html.scroll-locked { overflow: hidden; scroll-behavior: auto; }
 body {

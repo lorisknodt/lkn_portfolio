@@ -24,14 +24,16 @@ document.getElementById('theme-btn').addEventListener('click', () => {
 // While locked, scroll-behavior is 'auto' (see CSS): any such jump is then
 // instant and visible to the check below, never a slow glide to the top.
 let lockedY = 0;
+let locks = 0; // menu and dialog can overlap (keyboard users), so count them
 
 function lockScroll() {
+  if (locks++ > 0) return;
   lockedY = scrollY;
   root.classList.add('scroll-locked');
 }
 
 function unlockScroll({ settle = true } = {}) {
-  if (!root.classList.contains('scroll-locked')) return;
+  if (locks === 0 || --locks > 0) return;
   const restore = () => {
     if (Math.abs(scrollY - lockedY) >= 1) scrollTo({ top: lockedY, behavior: 'instant' });
   };
@@ -195,12 +197,13 @@ function closeDialog(dlg) {
   if (reduced) return dlg.close();
   dlg.classList.add('closing');
   const onEnd = e => { if (e.target === dlg) done(); }; // ignore animations inside the visual
+  const timer = setTimeout(() => done(), 450);          // safety net
   const done = () => {
+    clearTimeout(timer);
     dlg.removeEventListener('animationend', onEnd);
     if (dlg.open && dlg.classList.contains('closing')) dlg.close(); // not if reopened meanwhile
   };
   dlg.addEventListener('animationend', onEnd);
-  setTimeout(done, 450); // safety net
 }
 
 document.querySelectorAll('[data-open]').forEach(btn => {
@@ -222,8 +225,12 @@ document.querySelectorAll('dialog.modal').forEach(dlg => {
     unlockScroll();
   });
   dlg.addEventListener('cancel', e => { e.preventDefault(); closeDialog(dlg); });
+  // Backdrop closes only if the press started there too — selecting text and
+  // releasing outside the panel must not close it.
+  let pressedBackdrop = false;
+  dlg.addEventListener('pointerdown', e => { pressedBackdrop = e.target === dlg; });
   dlg.addEventListener('click', e => {
-    if (e.target === dlg || e.target.closest('[data-close]')) closeDialog(dlg);
+    if ((e.target === dlg && pressedBackdrop) || e.target.closest('[data-close]')) closeDialog(dlg);
   });
 });
 
