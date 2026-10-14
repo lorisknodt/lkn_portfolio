@@ -67,6 +67,10 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 56px;
   -webkit-text-size-adjust: 100%;
+  /* Clip on <html>, not <body>: the element that supplies the page's overflow
+     must not change when the lock below toggles, or Firefox rebuilds the page
+     scroller and can drop the reader back at the top. */
+  overflow-x: clip;
 }
 html.scroll-locked { overflow: hidden; scroll-behavior: auto; }
 body {
@@ -79,7 +83,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: clip;
   transition: background-color .4s var(--ease), color .4s var(--ease);
 }
 a { color: inherit; text-decoration: none; }
