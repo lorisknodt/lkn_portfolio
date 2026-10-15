@@ -18,6 +18,7 @@ uvicorn main:app --reload
 - ✍️ Statement « scroll-scrubbed » : les mots s'allument au fil du scroll
 - 🍱 Bento grid (About, stats, langues, localisation, disponibilité)
 - 🃏 Cartes projets avec visuels animés + fenêtre de détail (`<dialog>`)
+- 📱 Feastly : visite guidée avec les vraies captures de l'appli (chapitres façon Apple, lecture auto, pause) + galerie d'écrans
 - 🔦 Effet spotlight qui suit le curseur sur les cartes
 - 🧭 Timeline expérience / formation qui se remplit au scroll
 - 🌗 Mode clair / sombre, menu mobile, respect de `prefers-reduced-motion`
@@ -30,8 +31,9 @@ portfolio_v2/
 ├── requirements.txt
 ├── templates/
 │   ├── index.html        ← Template Jinja2
-│   └── visuals/          ← Visuels animés des projets
+│   └── visuals/          ← Visuels animés des projets (+ visite guidée)
 └── static/
+    ├── media/<projet>/   ← Vidéos MP4/WebM + captures WebP (générées depuis les GIFs)
     ├── css/style.css     ← Design system complet
     └── js/main.js        ← Toutes les animations
 ```

@@ -206,20 +206,26 @@
 
     <div class="projects">
       {% for p in projects %}
-      <article class="proj proj--{{ p.visual }}{% if loop.first %} proj--featured{% endif %} spot reveal" style="--pc: {{ p.accent }}">
+      <article class="proj proj--{{ p.visual }}{% if loop.first %} proj--featured{% endif %}{% if p.tour %} proj--tour{% endif %} spot reveal" style="--pc: {{ p.accent }}"{% if p.tour %} data-tour{% endif %}>
         <div class="proj-text">
           <p class="proj-type">{{ p.type }}</p>
           <h3 class="proj-name">{{ p.name }}</h3>
           <p class="proj-tagline">{{ p.tagline }}</p>
-          {% if loop.first %}
+          {% if p.tour %}
+          {% include "visuals/tour-list.html" %}
+          {% elif loop.first %}
           <ul class="proj-hl">
             {% for h in p.highlights %}<li>{{ h }}</li>{% endfor %}
           </ul>
           {% endif %}
         </div>
+        {% if p.tour %}
+        {% include "visuals/tour-phone.html" %}
+        {% else %}
         <div class="proj-visual" aria-hidden="true">
           {% include "visuals/" ~ p.visual ~ ".html" %}
         </div>
+        {% endif %}
         <button class="proj-hit" type="button" data-open="dlg-{{ p.id }}" aria-haspopup="dialog" aria-label="More about {{ p.name }}">
           <span class="plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
         </button>
@@ -366,9 +372,27 @@
       <p class="modal-tagline">{{ p.tagline }}</p>
     </div>
 
+    {% if p.screens %}
+    <div class="modal-visual modal-screens">
+      <div class="screens" tabindex="0" role="group" aria-label="{{ p.name }} screens">
+        {% for sc in p.screens %}
+        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp" alt="{{ sc.alt }}" width="420" height="910" loading="lazy" decoding="async"/>
+        {% endfor %}
+      </div>
+      <div class="screens-nav">
+        <button class="icon-btn" type="button" data-screens="-1" aria-label="Previous screens">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <button class="icon-btn" type="button" data-screens="1" aria-label="Next screens">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+    {% else %}
     <div class="modal-visual proj--{{ p.visual }}" aria-hidden="true">
       {% include "visuals/" ~ p.visual ~ ".html" %}
     </div>
+    {% endif %}
 
     <div class="modal-body">
       <p class="modal-desc">{{ p.description }}</p>

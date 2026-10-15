@@ -30,6 +30,7 @@ function lockScroll() {
   if (locks++ > 0) return;
   lockedY = scrollY;
   root.classList.add('scroll-locked');
+  root.dispatchEvent(new Event('scrolllock')); // overlays opened: demos pause
 }
 
 function unlockScroll({ settle = true } = {}) {
@@ -39,6 +40,7 @@ function unlockScroll({ settle = true } = {}) {
   };
   root.style.scrollBehavior = 'auto';
   root.classList.remove('scroll-locked');
+  root.dispatchEvent(new Event('scrolllock'));
   restore();
   if (!settle) { root.style.scrollBehavior = ''; return; } // let an anchor link glide
   // Catch engines that only move the page a frame or two later.
@@ -188,6 +190,122 @@ if (reduced) {
     tl.querySelectorAll('.tl-item').forEach(i => i.classList.add('lit'));
   });
 }
+
+// ── Project tours: real screen recordings, Apple-style chapters ─────
+// Clips load lazily (current chapter, then the next one in the background),
+// play muted, and advance on their own while the card is on screen. They
+// pause when it leaves the viewport, behind an overlay, or on request.
+document.querySelectorAll('[data-tour]').forEach(card => {
+  const list    = card.querySelector('.tour-list');
+  const items   = [...card.querySelectorAll('.tour-item')];
+  const videos  = [...card.querySelectorAll('.tour-video')];
+  const caption = card.querySelector('.tour-caption');
+  const toggle  = card.querySelector('.tour-toggle');
+  const what    = toggle.getAttribute('aria-label').replace(/^Pause /, '');
+  let index  = 0;
+  let paused = reduced; // reduced motion: nothing plays until asked
+  let inView = false;
+  let raf    = 0;
+  // H.264 where supported (Safari, Chrome, Edge, Firefox), VP9 elsewhere (e.g. plain Chromium).
+  const ext = videos[0].canPlayType('video/mp4; codecs="avc1.640028"') ? 'mp4' : 'webm';
+
+  const load = (v, warm = false) => {
+    if (warm) v.preload = 'auto';
+    if (v.getAttribute('src')) return;
+    v.poster = v.dataset.poster;
+    v.src = `${v.dataset.src}.${ext}`;
+  };
+  const current = () => videos[index];
+  const canPlay = () => !paused && inView && !document.hidden && !root.classList.contains('scroll-locked');
+
+  function sync() {
+    const v = current();
+    if (!canPlay()) return v.pause();
+    load(v, true);
+    v.play().catch(e => { if (e.name === 'NotAllowedError') setPaused(true); }); // e.g. iOS Low Power Mode
+  }
+
+  function setPaused(p, { apply = true } = {}) {
+    paused = p;
+    card.classList.toggle('is-paused', p);
+    toggle.setAttribute('aria-label', `${p ? 'Play' : 'Pause'} ${what}`);
+    if (apply) sync();
+  }
+
+  function show(i) {
+    const prev = current();
+    index = (i + videos.length) % videos.length;
+    items.forEach((it, k) => {
+      const on = k === index;
+      it.classList.toggle('is-active', on);
+      it.setAttribute('aria-pressed', String(on));
+      if (!on) it.style.setProperty('--progress', '0');
+    });
+    videos.forEach((v, k) => v.classList.toggle('is-active', k === index));
+    if (caption) caption.textContent = items[index].querySelector('.tour-text').textContent;
+    if (prev !== current()) prev.pause();
+    load(current(), true);
+    if (current().readyState > 0) current().currentTime = 0;
+    sync();
+    // Keep the active pill visible when the chapters scroll sideways (narrow screens).
+    if (list.scrollWidth > list.clientWidth) {
+      const li = items[index].parentElement;
+      list.scrollTo({ left: li.offsetLeft - (list.clientWidth - li.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+    }
+  }
+
+  // The active chapter's bar follows its clip.
+  const tick = () => {
+    const v = current();
+    if (v.duration) items[index].style.setProperty('--progress', (v.currentTime / v.duration).toFixed(4));
+    raf = v.paused ? 0 : requestAnimationFrame(tick);
+  };
+
+  videos.forEach((v, k) => {
+    v.addEventListener('playing', () => {
+      if (k !== index) return;
+      if (!raf) raf = requestAnimationFrame(tick);
+      load(videos[(k + 1) % videos.length], true); // warm up the next chapter
+    });
+    v.addEventListener('ended', () => {
+      if (k !== index) return;
+      items[index].style.setProperty('--progress', '1');
+      if (!paused) show(index + 1);
+    });
+  });
+
+  items.forEach((it, k) => it.addEventListener('click', () => {
+    if (!reduced) setPaused(false, { apply: false }); // picking a chapter means "show me"
+    show(k);
+  }));
+  toggle.addEventListener('click', () => setPaused(!paused));
+
+  // Posters load a little before the card scrolls in; playback needs it on screen.
+  const near = new IntersectionObserver(([e]) => {
+    if (e.isIntersecting) { load(current()); near.disconnect(); }
+  }, { rootMargin: '400px 0px' });
+  near.observe(card);
+  new IntersectionObserver(([e]) => { inView = e.isIntersecting; sync(); }, { threshold: 0.35 }).observe(card);
+  document.addEventListener('visibilitychange', sync);
+  root.addEventListener('scrolllock', sync);
+
+  setPaused(paused, { apply: false });
+});
+
+// ── Screen galleries in project dialogs ──────────────────
+document.querySelectorAll('.modal-screens').forEach(box => {
+  const strip = box.querySelector('.screens');
+  const [prev, next] = box.querySelectorAll('[data-screens]');
+  const update = () => {
+    prev.disabled = strip.scrollLeft < 4;
+    next.disabled = strip.scrollLeft + strip.clientWidth > strip.scrollWidth - 4;
+  };
+  [prev, next].forEach(b => b.addEventListener('click', () => {
+    strip.scrollBy({ left: Number(b.dataset.screens) * strip.clientWidth * 0.8, behavior: reduced ? 'auto' : 'smooth' });
+  }));
+  strip.addEventListener('scroll', update, { passive: true });
+  new ResizeObserver(update).observe(strip); // also runs when the dialog opens
+});
 
 // ── Project dialogs ──────────────────────────────────────
 let lastTrigger = null;

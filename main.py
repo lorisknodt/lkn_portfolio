@@ -39,7 +39,7 @@ data = {
     "projects": [
         {
             "id": "feastly",
-            "visual": "feastly", "accent": "#00B4AB",
+            "visual": "feastly", "accent": "#FE7603",
             "name": "Feastly",
             "tagline": "Find the right place for the right mood.",
             "description": (
@@ -52,6 +52,32 @@ data = {
             "highlights": ["134 commits", "Clean Architecture", "CI/CD", "Chatbot"],
             "github": "https://github.com/TonyVandeWiele/Feastly",
             "type": "Mobile · Team",
+            # Real screen recordings (static/media/feastly/<id>.mp4 + <id>-poster.webp),
+            # played as an auto-advancing tour on the project card.
+            "tour": [
+                {"id": "discover",   "title": "Discover",
+                 "text": "Places picked for you, from popular and nearby to food and drinks, one tab away."},
+                {"id": "chatbot",    "title": "Mood chatbot",
+                 "text": "Say how you feel. The bot asks a question or two, then suggests a spot."},
+                {"id": "onboarding", "title": "Taste onboarding",
+                 "text": "Swipe what you like and pick your cuisines, so recommendations fit from day one."},
+                {"id": "schedule",   "title": "Schedule",
+                 "text": "Plan an outing on the calendar, down to the minute."},
+                {"id": "darkmode",   "title": "Dark mode",
+                 "text": "A warm dark theme, one tap away in the profile."},
+                {"id": "language",   "title": "Three languages",
+                 "text": "English, French and Chinese, switched on the fly."},
+            ],
+            # Stills for the gallery in the project dialog (static/media/feastly/shot-<file>.webp).
+            "screens": [
+                {"file": "discover",         "alt": "Discover tab with nearby recommendations"},
+                {"file": "chatbot",          "alt": "Chatbot suggesting a bowling alley"},
+                {"file": "onboarding",       "alt": "Onboarding: swiping through activities you like"},
+                {"file": "onboarding-prefs", "alt": "Onboarding: picking favourite cuisines"},
+                {"file": "schedule",         "alt": "Schedule with the time picker open"},
+                {"file": "darkmode",         "alt": "Profile screen with the theme switch"},
+                {"file": "language",         "alt": "Language picker: English, French, Chinese"},
+            ],
         },
         {
             "id": "iot2",

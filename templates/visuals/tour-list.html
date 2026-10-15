@@ -1,0 +1,13 @@
+{# Chapter list for a project tour — one button per screen recording. #}
+<ol class="tour-list" aria-label="{{ p.name }} features">
+  {% for c in p.tour %}
+  <li>
+    <button class="tour-item{% if loop.first %} is-active{% endif %}" type="button" data-chapter="{{ loop.index0 }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+      <span class="tour-title">{{ c.title }}</span>
+      <span class="tour-text">{{ c.text }}</span>
+      <span class="tour-bar" aria-hidden="true"><i></i></span>
+    </button>
+  </li>
+  {% endfor %}
+</ol>
+<p class="tour-caption">{{ p.tour[0].text }}</p>
