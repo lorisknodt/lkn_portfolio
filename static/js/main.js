@@ -192,36 +192,51 @@ if (reduced) {
 }
 
 // ── Project tours: real screen recordings, Apple-style chapters ─────
-// Clips load lazily (current chapter, then the next one in the background),
-// play muted, and advance on their own while the card is on screen. They
-// pause when it leaves the viewport, behind an overlay, or on request.
+// Clips load lazily and play muted, advancing on their own. Only the most
+// visible tour plays (or the one the visitor last touched), and only while
+// its device is on screen, no overlay is open and the visitor hasn't paused.
+const tours = [];
+let preferredTour = null;
+
+function playingTour() {
+  if (preferredTour && preferredTour.ratio >= 0.35) return preferredTour;
+  const best = tours.reduce((a, t) => (t.ratio > a.ratio ? t : a), { ratio: 0 });
+  return best.ratio >= 0.35 ? best : null;
+}
+const syncTours = () => tours.forEach(t => t.sync());
+
 document.querySelectorAll('[data-tour]').forEach(card => {
   const list    = card.querySelector('.tour-list');
   const items   = [...card.querySelectorAll('.tour-item')];
   const videos  = [...card.querySelectorAll('.tour-video')];
   const caption = card.querySelector('.tour-caption');
   const toggle  = card.querySelector('.tour-toggle');
+  const device  = card.querySelector('.phone');
   const what    = toggle.getAttribute('aria-label').replace(/^Pause /, '');
-  let index  = 0;
-  let paused = reduced; // reduced motion: nothing plays until asked
-  let inView = false;
-  let raf    = 0;
   // H.264 where supported (Safari, Chrome, Edge, Firefox), VP9 elsewhere (e.g. plain Chromium).
   const ext = videos[0].canPlayType('video/mp4; codecs="avc1.640028"') ? 'mp4' : 'webm';
+  const me = { ratio: 0, sync };
+  tours.push(me);
 
-  const load = (v, warm = false) => {
+  let index      = 0;
+  let paused     = reduced; // reduced motion: nothing plays until asked
+  let userPaused = false;   // an explicit Pause sticks until Play
+  let raf        = 0;
+  let dwell      = 0;
+
+  // poster: only where it will actually show; warm: buffer the whole clip.
+  const load = (v, { warm = false, poster = true } = {}) => {
     if (warm) v.preload = 'auto';
-    if (v.getAttribute('src')) return;
-    v.poster = v.dataset.poster;
-    v.src = `${v.dataset.src}.${ext}`;
+    if (poster && !v.getAttribute('poster')) v.poster = v.dataset.poster;
+    if (!v.getAttribute('src')) v.src = `${v.dataset.src}.${ext}`;
   };
   const current = () => videos[index];
-  const canPlay = () => !paused && inView && !document.hidden && !root.classList.contains('scroll-locked');
+  const canPlay = () => !paused && playingTour() === me && !document.hidden && !root.classList.contains('scroll-locked');
 
   function sync() {
     const v = current();
     if (!canPlay()) return v.pause();
-    load(v, true);
+    load(v, { warm: true });
     v.play().catch(e => { if (e.name === 'NotAllowedError') setPaused(true); }); // e.g. iOS Low Power Mode
   }
 
@@ -238,13 +253,13 @@ document.querySelectorAll('[data-tour]').forEach(card => {
     items.forEach((it, k) => {
       const on = k === index;
       it.classList.toggle('is-active', on);
-      it.setAttribute('aria-pressed', String(on));
-      if (!on) it.style.setProperty('--progress', '0');
+      if (on) { it.setAttribute('aria-current', 'true'); it.style.setProperty('--progress', '0'); }
+      else it.removeAttribute('aria-current');
     });
     videos.forEach((v, k) => v.classList.toggle('is-active', k === index));
-    if (caption) caption.textContent = items[index].querySelector('.tour-text').textContent;
+    caption?.querySelectorAll('span').forEach((s, k) => s.classList.toggle('is-active', k === index));
     if (prev !== current()) prev.pause();
-    load(current(), true);
+    load(current()); // sync() warms it if it is going to play
     if (current().readyState > 0) current().currentTime = 0;
     sync();
     // Keep the active pill visible when the chapters scroll sideways (narrow screens).
@@ -254,38 +269,60 @@ document.querySelectorAll('[data-tour]').forEach(card => {
     }
   }
 
-  // The active chapter's bar follows its clip.
+  // The active chapter's bar follows its clip; the next clip is fetched once
+  // this one has held the visitor for a few seconds.
   const tick = () => {
     const v = current();
     if (v.duration) items[index].style.setProperty('--progress', (v.currentTime / v.duration).toFixed(4));
-    raf = v.paused ? 0 : requestAnimationFrame(tick);
+    if (v.currentTime > 3) load(videos[(index + 1) % videos.length], { warm: true, poster: false });
+    raf = v.paused || v.readyState < 3 ? 0 : requestAnimationFrame(tick); // stalled: 'playing' restarts it
   };
 
   videos.forEach((v, k) => {
-    v.addEventListener('playing', () => {
-      if (k !== index) return;
-      if (!raf) raf = requestAnimationFrame(tick);
-      load(videos[(k + 1) % videos.length], true); // warm up the next chapter
-    });
+    v.addEventListener('playing', () => { if (k === index && !raf) raf = requestAnimationFrame(tick); });
     v.addEventListener('ended', () => {
       if (k !== index) return;
       items[index].style.setProperty('--progress', '1');
-      if (!paused) show(index + 1);
+      if (paused) return;
+      // Don't move the chapters under keyboard focus: replay this one instead.
+      if (list.querySelector(':focus-visible')) { v.currentTime = 0; sync(); }
+      else show(index + 1);
+    });
+    // A clip that fails to load is reset (so it can retry later) and skipped.
+    v.addEventListener('error', () => {
+      v.removeAttribute('src');
+      v.load();
+      if (k === index) setTimeout(() => { if (k === index && canPlay()) show(index + 1); }, 2500);
     });
   });
 
   items.forEach((it, k) => it.addEventListener('click', () => {
-    if (!reduced) setPaused(false, { apply: false }); // picking a chapter means "show me"
+    preferredTour = me;
+    if (!reduced && !userPaused) setPaused(false, { apply: false }); // picking a chapter means "show me"
     show(k);
+    syncTours(); // another tour may have to give way
   }));
-  toggle.addEventListener('click', () => setPaused(!paused));
+  toggle.addEventListener('click', () => {
+    userPaused = !paused;
+    if (!userPaused) preferredTour = me;
+    setPaused(!paused);
+    syncTours();
+  });
 
-  // Posters load a little before the card scrolls in; playback needs it on screen.
+  // Posters load a little before the device scrolls in; playback needs it on
+  // screen for a moment (a quick fling past the card downloads nothing).
   const near = new IntersectionObserver(([e]) => {
     if (e.isIntersecting) { load(current()); near.disconnect(); }
   }, { rootMargin: '400px 0px' });
-  near.observe(card);
-  new IntersectionObserver(([e]) => { inView = e.isIntersecting; sync(); }, { threshold: 0.35 }).observe(card);
+  near.observe(device);
+  new IntersectionObserver(entries => {
+    const e = entries[entries.length - 1];
+    me.ratio = e.isIntersecting ? e.intersectionRatio : 0;
+    if (preferredTour === me && me.ratio < 0.35) preferredTour = null;
+    clearTimeout(dwell);
+    if (me.ratio >= 0.35) dwell = setTimeout(syncTours, 350);
+    else syncTours();
+  }, { threshold: [0, 0.35, 0.5, 0.75, 1] }).observe(device);
   document.addEventListener('visibilitychange', sync);
   root.addEventListener('scrolllock', sync);
 
@@ -293,12 +330,13 @@ document.querySelectorAll('[data-tour]').forEach(card => {
 });
 
 // ── Screen galleries in project dialogs ──────────────────
+// aria-disabled (not disabled) at the ends, so a focused arrow keeps focus.
 document.querySelectorAll('.modal-screens').forEach(box => {
   const strip = box.querySelector('.screens');
   const [prev, next] = box.querySelectorAll('[data-screens]');
   const update = () => {
-    prev.disabled = strip.scrollLeft < 4;
-    next.disabled = strip.scrollLeft + strip.clientWidth > strip.scrollWidth - 4;
+    prev.setAttribute('aria-disabled', String(strip.scrollLeft < 4));
+    next.setAttribute('aria-disabled', String(strip.scrollLeft + strip.clientWidth > strip.scrollWidth - 4));
   };
   [prev, next].forEach(b => b.addEventListener('click', () => {
     strip.scrollBy({ left: Number(b.dataset.screens) * strip.clientWidth * 0.8, behavior: reduced ? 'auto' : 'smooth' });

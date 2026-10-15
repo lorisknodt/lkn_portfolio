@@ -1,12 +1,11 @@
 {# Phone playing the project's real screen recordings; videos load lazily (see main.js). #}
 <div class="proj-visual">
   <div class="v-glow" aria-hidden="true"></div>
-  <div class="phone" aria-hidden="true">
+  <div class="phone" aria-hidden="true" inert>
     <div class="phone-screen">
       {% for c in p.tour %}
-      <video class="tour-video{% if loop.first %} is-active{% endif %}" muted playsinline disablepictureinpicture preload="none"
-             data-src="/static/media/{{ p.id }}/{{ c.id }}" data-poster="/static/media/{{ p.id }}/{{ c.id }}-poster.webp"
-             {%- if loop.first %} poster="/static/media/{{ p.id }}/{{ c.id }}-poster.webp"{% endif %}></video>
+      <video class="tour-video{% if loop.first %} is-active{% endif %}" muted playsinline disablepictureinpicture preload="none" tabindex="-1"
+             data-src="/static/media/{{ p.id }}/{{ c.id }}" data-poster="/static/media/{{ p.id }}/{{ c.id }}-poster.webp"></video>
       {% endfor %}
     </div>
   </div>

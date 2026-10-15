@@ -2,7 +2,7 @@
 <ol class="tour-list" aria-label="{{ p.name }} features">
   {% for c in p.tour %}
   <li>
-    <button class="tour-item{% if loop.first %} is-active{% endif %}" type="button" data-chapter="{{ loop.index0 }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+    <button class="tour-item{% if loop.first %} is-active{% endif %}" type="button" data-chapter="{{ loop.index0 }}"{% if loop.first %} aria-current="true"{% endif %}>
       <span class="tour-title">{{ c.title }}</span>
       <span class="tour-text">{{ c.text }}</span>
       <span class="tour-bar" aria-hidden="true"><i></i></span>
@@ -10,4 +10,7 @@
   </li>
   {% endfor %}
 </ol>
-<p class="tour-caption">{{ p.tour[0].text }}</p>
+{# Narrow screens: every text sits in one grid cell, so the caption keeps the height of the longest. #}
+<p class="tour-caption" aria-hidden="true">
+  {%- for c in p.tour %}<span{% if loop.first %} class="is-active"{% endif %}>{{ c.text }}</span>{% endfor -%}
+</p>

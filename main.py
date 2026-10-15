@@ -1,12 +1,35 @@
 from datetime import date
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+
+class Static(StaticFiles):
+    """Media (videos, stills) rarely change: cache a week. CSS/JS: always revalidate (cheap 304s)."""
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        media = scope["path"].startswith("/static/media/") or scope["path"].startswith("/media/")
+        response.headers["Cache-Control"] = "public, max-age=604800" if media else "no-cache"
+        return response
+
+
+class TextGZip(GZipMiddleware):
+    """Compress HTML/CSS/JS; leave video (range requests) untouched."""
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith("/static/media/"):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(TextGZip, minimum_size=1000)
+app.mount("/static", Static(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 data = {
