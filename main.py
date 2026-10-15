@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
@@ -8,12 +9,13 @@ from fastapi.templating import Jinja2Templates
 
 
 class Static(StaticFiles):
-    """Media (videos, stills) rarely change: cache a week. CSS/JS: always revalidate (cheap 304s)."""
+    """Media (videos, stills): cache long, URLs are versioned. CSS/JS: always revalidate (cheap 304s)."""
 
     def file_response(self, full_path, stat_result, scope, status_code=200):
         response = super().file_response(full_path, stat_result, scope, status_code)
         media = scope["path"].startswith("/static/media/") or scope["path"].startswith("/media/")
-        response.headers["Cache-Control"] = "public, max-age=604800" if media else "no-cache"
+        # Media URLs carry ?v=<media_version()>, so they can be cached for good.
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if media else "no-cache"
         return response
 
 
@@ -215,6 +217,15 @@ data = {
 }
 
 
+MEDIA_DIR = Path(__file__).parent / "static" / "media"
+
+
+def media_version() -> str:
+    """Newest modification time under static/media, appended to media URLs (?v=) to bust caches."""
+    stamps = [f.stat().st_mtime for f in MEDIA_DIR.rglob("*") if f.is_file()]
+    return format(int(max(stamps, default=0)), "x")
+
+
 def view_data() -> dict:
     """Derive the small presentation helpers the template needs from `data`."""
     before, hl, after = data["tagline"].partition(data["tagline_highlight"])
@@ -226,6 +237,7 @@ def view_data() -> dict:
             for w in data["statement"].split()
         ],
         "year": date.today().year,
+        "media_v": media_version(),
     }
 
 

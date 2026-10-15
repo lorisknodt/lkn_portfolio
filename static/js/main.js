@@ -197,10 +197,12 @@ if (reduced) {
 // its device is on screen, no overlay is open and the visitor hasn't paused.
 const tours = [];
 let preferredTour = null;
+let settle = 0; // shared: nothing starts until scrolling settles
 
+// Paused tours don't compete, so a tour the visitor started is never blocked by one at rest.
 function playingTour() {
-  if (preferredTour && preferredTour.ratio >= 0.35) return preferredTour;
-  const best = tours.reduce((a, t) => (t.ratio > a.ratio ? t : a), { ratio: 0 });
+  if (preferredTour && !preferredTour.paused && preferredTour.ratio >= 0.35) return preferredTour;
+  const best = tours.filter(t => !t.paused).reduce((a, t) => (t.ratio > a.ratio ? t : a), { ratio: 0 });
   return best.ratio >= 0.35 ? best : null;
 }
 const syncTours = () => tours.forEach(t => t.sync());
@@ -215,25 +217,36 @@ document.querySelectorAll('[data-tour]').forEach(card => {
   const what    = toggle.getAttribute('aria-label').replace(/^Pause /, '');
   // H.264 where supported (Safari, Chrome, Edge, Firefox), VP9 elsewhere (e.g. plain Chromium).
   const ext = videos[0].canPlayType('video/mp4; codecs="avc1.640028"') ? 'mp4' : 'webm';
-  const me = { ratio: 0, sync };
+  const me = { ratio: 0, sync, get paused() { return paused; } };
   tours.push(me);
 
   let index      = 0;
   let paused     = reduced; // reduced motion: nothing plays until asked
   let userPaused = false;   // an explicit Pause sticks until Play
   let raf        = 0;
-  let dwell      = 0;
+  let warmed     = -1;      // chapter whose successor is already fetched
 
-  // poster: only where it will actually show; warm: buffer the whole clip.
+  // warm: buffer the whole clip. The poster only goes on a clip that has
+  // nothing buffered yet (a warmed clip shows its own first frame).
   const load = (v, { warm = false, poster = true } = {}) => {
     if (warm) v.preload = 'auto';
-    if (poster && !v.getAttribute('poster')) v.poster = v.dataset.poster;
-    if (!v.getAttribute('src')) v.src = `${v.dataset.src}.${ext}`;
+    if (v.getAttribute('src')) return;
+    if (poster) v.poster = v.dataset.poster;
+    v.src = `${v.dataset.src}.${ext}?v=${v.dataset.v}`;
   };
   const current = () => videos[index];
   const canPlay = () => !paused && playingTour() === me && !document.hidden && !root.classList.contains('scroll-locked');
+  const yields  = () => !paused && me.ratio >= 0.35 && playingTour() !== me; // on screen, giving way to the other tour
+
+  // The toggle shows what the tour is doing, including when it gives way.
+  function updateToggle() {
+    const idle = paused || yields();
+    card.classList.toggle('is-paused', idle);
+    toggle.setAttribute('aria-label', `${idle ? 'Play' : 'Pause'} ${what}`);
+  }
 
   function sync() {
+    updateToggle();
     const v = current();
     if (!canPlay()) return v.pause();
     load(v, { warm: true });
@@ -242,9 +255,8 @@ document.querySelectorAll('[data-tour]').forEach(card => {
 
   function setPaused(p, { apply = true } = {}) {
     paused = p;
-    card.classList.toggle('is-paused', p);
-    toggle.setAttribute('aria-label', `${p ? 'Play' : 'Pause'} ${what}`);
-    if (apply) sync();
+    if (apply) syncTours(); // pausing one tour can let the other play
+    else updateToggle();
   }
 
   function show(i) {
@@ -274,7 +286,10 @@ document.querySelectorAll('[data-tour]').forEach(card => {
   const tick = () => {
     const v = current();
     if (v.duration) items[index].style.setProperty('--progress', (v.currentTime / v.duration).toFixed(4));
-    if (v.currentTime > 3) load(videos[(index + 1) % videos.length], { warm: true, poster: false });
+    if (v.currentTime > 3 && warmed !== index) { // once per chapter: a failing clip must not be re-requested every frame
+      warmed = index;
+      load(videos[(index + 1) % videos.length], { warm: true, poster: false });
+    }
     raf = v.paused || v.readyState < 3 ? 0 : requestAnimationFrame(tick); // stalled: 'playing' restarts it
   };
 
@@ -298,15 +313,15 @@ document.querySelectorAll('[data-tour]').forEach(card => {
 
   items.forEach((it, k) => it.addEventListener('click', () => {
     preferredTour = me;
-    if (!reduced && !userPaused) setPaused(false, { apply: false }); // picking a chapter means "show me"
+    if (!reduced && !userPaused) paused = false; // picking a chapter means "show me"
     show(k);
     syncTours(); // another tour may have to give way
   }));
   toggle.addEventListener('click', () => {
-    userPaused = !paused;
-    if (!userPaused) preferredTour = me;
-    setPaused(!paused);
-    syncTours();
+    const play = paused || yields(); // one press starts a tour that was giving way
+    userPaused = !play;
+    if (play) preferredTour = me;
+    setPaused(!play);
   });
 
   // Posters load a little before the device scrolls in; playback needs it on
@@ -319,10 +334,10 @@ document.querySelectorAll('[data-tour]').forEach(card => {
     const e = entries[entries.length - 1];
     me.ratio = e.isIntersecting ? e.intersectionRatio : 0;
     if (preferredTour === me && me.ratio < 0.35) preferredTour = null;
-    clearTimeout(dwell);
-    if (me.ratio >= 0.35) dwell = setTimeout(syncTours, 350);
-    else syncTours();
-  }, { threshold: [0, 0.35, 0.5, 0.75, 1] }).observe(device);
+    if (me.ratio < 0.35) sync();          // leaving: stop at once
+    clearTimeout(settle);
+    settle = setTimeout(syncTours, 350);  // starting: wait until the scroll settles
+  }, { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }).observe(device);
   document.addEventListener('visibilitychange', sync);
   root.addEventListener('scrolllock', sync);
 

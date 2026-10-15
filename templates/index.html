@@ -378,7 +378,7 @@
     <div class="modal-visual modal-screens">
       <div class="screens" tabindex="0" role="group" aria-label="{{ p.name }} screens">
         {% for sc in p.screens %}
-        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp" alt="{{ sc.alt }}" width="420" height="{{ 630 if p.device == 'tablet' else 910 }}" loading="lazy" decoding="async"/>
+        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp?v={{ media_v }}" alt="{{ sc.alt }}" width="420" height="{{ 630 if p.device == 'tablet' else 910 }}" loading="lazy" decoding="async"/>
         {% endfor %}
       </div>
       <div class="screens-nav">

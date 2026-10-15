@@ -590,7 +590,7 @@ html:not(.js) .statement-text .w,
   letter-spacing: .02em;
   color: var(--pc);
 }
-[data-theme="light"] :is(.proj:not(.proj--vr), .modal) .proj-type { color: color-mix(in srgb, var(--pc) 65%, #000); } /* ≥4.5:1 */
+[data-theme="light"] :is(.proj:not(.proj--vr), .modal) .proj-type { color: color-mix(in srgb, var(--pc) 55%, #000); } /* ≥4.5:1 for every accent */
 .proj-name {
   margin-top: .6rem;
   font-size: clamp(1.75rem, 2.6vw, 2.25rem);
@@ -723,11 +723,18 @@ html:not(.js) .statement-text .w,
 .tour-item:hover .tour-title,
 .tour-item.is-active .tour-title { color: var(--text); }
 .tour-text {
+  --lines: 3;
+  height: calc(var(--lines) * 1.45em);
+  height: calc(var(--lines) * 1lh); /* follows user text-spacing overrides */
   max-height: 0; opacity: 0; overflow: hidden;
   font-size: .9375rem; line-height: 1.45; color: var(--text-2);
   transition: max-height .5s var(--ease-out), opacity .4s var(--ease), margin-top .5s var(--ease-out);
 }
-.tour-item.is-active .tour-text { max-height: 4.5em; opacity: 1; margin-top: .3rem; }
+.tour-item.is-active .tour-text {
+  max-height: calc(var(--lines) * 1.45em);
+  max-height: calc(var(--lines) * 1lh);
+  opacity: 1; margin-top: .3rem;
+}
 .tour-bar {
   display: block;
   height: 2px; margin-top: .65rem;
@@ -905,7 +912,10 @@ html:not(.js) .statement-text .w,
 }
 .screens-nav { display: flex; justify-content: flex-end; gap: .5rem; padding: 0 24px; margin-top: -14px; }
 .screens-nav .icon-btn { width: 36px; height: 36px; background: var(--glass-2); color: var(--text); }
-.screens-nav .icon-btn[aria-disabled="true"] { opacity: .35; cursor: default; }
+.screens-nav .icon-btn[aria-disabled="true"] { cursor: default; }
+.screens-nav .icon-btn[aria-disabled="true"] svg { opacity: .35; }
+.screens-nav .icon-btn[aria-disabled="true"]:hover { background: var(--glass-2); }
+.screens-nav .icon-btn[aria-disabled="true"]:active { transform: none; }
 .screens:focus-visible { outline: none; } /* the edge mask would clip it */
 .modal-screens:has(.screens:focus-visible) { box-shadow: inset 0 0 0 2px var(--accent); }
 .modal-body { padding: 40px 56px 56px; }
@@ -1094,7 +1104,7 @@ html:not(.js) .statement-text .w,
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (min-width: 1001px) and (max-width: 1200px) {
-  .tour-item.is-active .tour-text { height: calc(3 * 1.45em); } /* same height for every chapter */
+  .tour-text { --lines: 4; } /* the text column is narrow here */
 }
 
 @media (max-width: 1000px) {
