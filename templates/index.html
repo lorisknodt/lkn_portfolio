@@ -206,7 +206,9 @@
 
     <div class="projects">
       {% for p in projects %}
-      <article class="proj proj--{{ p.visual }}{% if loop.first %} proj--featured{% endif %}{% if p.tour %} proj--tour{% endif %} spot reveal" style="--pc: {{ p.accent }}"{% if p.tour %} data-tour{% endif %}>
+      <article class="proj proj--{{ p.visual }}
+        {%- if p.tour or loop.first %} proj--featured{% endif %}
+        {%- if p.tour %} proj--tour{% if p.device == 'tablet' %} proj--tablet{% endif %}{% if loop.index is even %} proj--flip{% endif %}{% endif %} spot reveal" style="--pc: {{ p.accent }}"{% if p.tour %} data-tour{% endif %}>
         <div class="proj-text">
           <p class="proj-type">{{ p.type }}</p>
           <h3 class="proj-name">{{ p.name }}</h3>
@@ -376,7 +378,7 @@
     <div class="modal-visual modal-screens">
       <div class="screens" tabindex="0" role="group" aria-label="{{ p.name }} screens">
         {% for sc in p.screens %}
-        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp" alt="{{ sc.alt }}" width="420" height="910" loading="lazy" decoding="async"/>
+        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp" alt="{{ sc.alt }}" width="420" height="{{ 630 if p.device == 'tablet' else 910 }}" loading="lazy" decoding="async"/>
         {% endfor %}
       </div>
       <div class="screens-nav">

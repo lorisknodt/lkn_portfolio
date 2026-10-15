@@ -93,6 +93,27 @@ data = {
             "highlights": ["28 commits", "MVVM", "3DSecure", "Retrofit"],
             "github": "https://github.com/lorisknodt/iot2_clm",
             "type": "Android · Solo",
+            "device": "tablet",  # recordings are 800×1200, shown in a tablet frame
+            "tour": [
+                {"id": "shop",     "title": "Shop",
+                 "text": "Browse by category, open a product, add it to the cart."},
+                {"id": "checkout", "title": "Checkout",
+                 "text": "Pick a saved address or enter a new one, with delivery instructions."},
+                {"id": "payment",  "title": "3-D Secure payment",
+                 "text": "Card payment through a secure web flow, confirmed in the app."},
+                {"id": "orders",   "title": "Orders",
+                 "text": "Order history with live status. Open one, cancel it if it has not shipped."},
+            ],
+            "screens": [
+                {"file": "products", "alt": "Product list with category filters"},
+                {"file": "product",  "alt": "Product detail with the add-to-cart button"},
+                {"file": "cart",     "alt": "Cart with quantity controls and total"},
+                {"file": "checkout", "alt": "Checkout: delivery address and instructions"},
+                {"file": "payment",  "alt": "3-D Secure card payment form"},
+                {"file": "success",  "alt": "Payment confirmed screen"},
+                {"file": "orders",   "alt": "Order history with delivery statuses"},
+                {"file": "cancel",   "alt": "Order detail with the cancel confirmation"},
+            ],
         },
         {
             "id": "ann",

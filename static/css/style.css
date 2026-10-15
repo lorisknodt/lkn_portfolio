@@ -569,7 +569,7 @@ html:not(.js) .statement-text .w,
 /* ── Projects ───────────────────────────────────────────── */
 .projects {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 .proj {
@@ -651,16 +651,24 @@ html:not(.js) .statement-text .w,
 }
 [data-theme="light"] .v-glow { opacity: .55; }
 
-/* Project tour ─ real screen recordings in a phone, chapters beside it */
-.proj--tour { min-height: 800px; }
+/* Project tour ─ real screen recordings in a device, chapters beside it */
+.proj--tour {
+  --w: 300px;        /* device width */
+  --bezel: 11px;
+  --ratio: 2.166;    /* screen height / width: Feastly's 1180×2556 recordings */
+  --dev-h: calc((var(--w) - 2 * var(--bezel)) * var(--ratio) + 2 * var(--bezel));
+  min-height: calc(var(--dev-h) + 176px);
+}
+.proj--tablet { --w: 404px; --bezel: 14px; --ratio: 1.5; } /* CLM: 800×1200 */
+.proj--flip { flex-direction: row-reverse; }
+.proj--flip .proj-text { padding: 56px 56px 56px 32px; }
 .proj--tour .proj-text { z-index: auto; } /* let the chapter list sit above the card's click target */
 .proj--tour .v-glow { top: 50%; }
 .phone {
-  --w: 300px;
   position: absolute; left: 50%; top: 50%;
   width: var(--w);
-  height: calc((var(--w) - 22px) * 2.166 + 22px); /* screen matches the 1180×2556 recordings */
-  padding: 11px;
+  height: var(--dev-h);
+  padding: var(--bezel);
   border-radius: 56px;
   background: #1c1c1e;
   box-shadow:
@@ -671,13 +679,21 @@ html:not(.js) .statement-text .w,
   transition: transform .8s var(--ease-out);
 }
 .proj--tour .phone { top: 46.5%; }
+.proj--tablet .phone { border-radius: 34px; }
+.proj--tablet .phone::before { /* front camera */
+  content: ""; position: absolute; top: 5px; left: 50%;
+  width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%;
+  background: #2c2c2e;
+}
 .proj--tour:hover .phone { transform: translate(-50%, calc(-50% - 8px)); }
 .phone-screen {
+  --sr: 45px;
   position: relative; height: 100%;
-  border-radius: 45px;
-  clip-path: inset(0 round 45px); /* clips video corners reliably, Safari included */
+  border-radius: var(--sr);
+  clip-path: inset(0 round var(--sr)); /* clips video corners reliably, Safari included */
   background: #000;
 }
+.proj--tablet .phone-screen { --sr: 21px; background: #f5f5f4; }
 .tour-video {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
@@ -744,74 +760,6 @@ html:not(.js) .statement-text .w,
 .tour-toggle .icon-play,
 .proj--tour.is-paused .tour-toggle .icon-pause { display: none; }
 .proj--tour.is-paused .tour-toggle .icon-play { display: block; }
-
-/* Visual: CLM Shop ─ card + 3-D Secure */
-.vs { position: absolute; inset: 0; perspective: 1000px; }
-.vs-stage {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  transform-style: preserve-3d;
-}
-.vs-card {
-  position: relative;
-  width: min(78%, 300px); aspect-ratio: 1.586;
-  padding: 18px 20px;
-  border-radius: 18px;
-  color: #fff;
-  background:
-    radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, .28), transparent 50%),
-    linear-gradient(135deg, color-mix(in srgb, var(--pc) 100%, #fff 10%), color-mix(in srgb, var(--pc) 45%, #10002b));
-  box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--pc) 60%, transparent), inset 0 0 0 1px rgba(255, 255, 255, .18);
-  transform: rotateX(18deg) rotateY(-16deg) rotateZ(4deg) translateY(-12px);
-  animation: float 7s var(--ease) infinite;
-  display: grid;
-  grid-template: "brand nfc" auto "chip ." 1fr "num num" auto "holder holder" auto / 1fr auto;
-}
-.vs-brand { grid-area: brand; font-weight: 800; letter-spacing: .04em; font-size: 15px; }
-.vs-nfc { grid-area: nfc; width: 20px; opacity: .85; }
-.vs-chip {
-  grid-area: chip; align-self: center;
-  width: 38px; height: 28px; border-radius: 6px;
-  background: linear-gradient(135deg, #f5e0a3, #c9a24c);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-}
-.vs-num { grid-area: num; font-size: 14px; letter-spacing: .12em; font-variant-numeric: tabular-nums; opacity: .95; }
-.vs-holder { grid-area: holder; margin-top: 4px; font-size: 10px; letter-spacing: .14em; opacity: .7; }
-.vs-sheet {
-  position: absolute; left: 50%; bottom: 14%;
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 18px 12px 14px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--card-2) 82%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: inset 0 0 0 1px var(--line-2), var(--shadow);
-  transform: translateX(-62%) translateZ(60px);
-  white-space: nowrap;
-}
-.vs-shield { width: 30px; color: var(--green); }
-.vs-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 4s var(--ease-out) infinite; }
-.vs-sheet-text { display: flex; flex-direction: column; line-height: 1.25; }
-.vs-sheet-text b { font-size: 14px; font-weight: 600; }
-.vs-sheet-text span { font-size: 12px; color: var(--text-2); }
-.vs-cart {
-  position: absolute; top: 12%; right: 16%;
-  width: 52px; height: 52px; border-radius: 16px;
-  display: grid; place-items: center;
-  background: color-mix(in srgb, var(--card-2) 82%, transparent);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  box-shadow: inset 0 0 0 1px var(--line-2), var(--shadow);
-  color: var(--text);
-  animation: float 6s 1s var(--ease) infinite;
-}
-.vs-cart svg { width: 24px; }
-.vs-cart span {
-  position: absolute; top: -6px; right: -6px;
-  min-width: 20px; height: 20px; border-radius: 10px;
-  display: grid; place-items: center;
-  font-size: 11px; font-weight: 700;
-  background: var(--pc); color: #fff;
-}
 
 /* Visual: ANN ─ forward pass */
 .va { position: absolute; inset: 0; display: grid; place-items: center; }
@@ -948,8 +896,7 @@ html:not(.js) .statement-text .w,
 .screens::-webkit-scrollbar { display: none; }
 .screens img {
   flex: 0 0 auto;
-  width: 190px; height: auto;
-  aspect-ratio: 420 / 910;
+  width: 190px; height: auto; /* ratio comes from the width/height attributes */
   border-radius: 26px;
   background: #111;
   box-shadow: 0 0 0 1px var(--line-2), 0 24px 50px -24px rgba(0, 0, 0, .6);
@@ -1125,8 +1072,6 @@ html:not(.js) .statement-text .w,
 @keyframes breathe   { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.12); } }
 @keyframes modal-in  { from { opacity: 0; transform: translateY(40px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes modal-out { to { opacity: 0; transform: translateY(24px) scale(.98); } }
-@keyframes float     { 50% { translate: 0 -10px; } }
-@keyframes draw      { 0%, 15% { stroke-dashoffset: 1; } 35%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 1; } }
 @keyframes pulse-edge { 0% { stroke-dashoffset: 7; } 24%, 100% { stroke-dashoffset: -100; } }
 @keyframes node {
   0%       { fill: var(--card); stroke-opacity: .55; }
@@ -1149,13 +1094,12 @@ html:not(.js) .statement-text .w,
   .bento { grid-template-columns: repeat(2, 1fr); }
   .tile--about { grid-row: auto; }
   .projects { grid-template-columns: 1fr 1fr; }
-  .proj--featured { flex-direction: column; min-height: 0; }
+  .proj--featured, .proj--flip { flex-direction: column; min-height: 0; }
   .proj--featured .proj-text { flex: none; align-self: stretch; padding: 40px 40px 0; }
   .proj--featured .proj-visual { min-height: 440px; }
-  .proj--vr { grid-column: 1 / -1; }
 
   /* Tour: chapters become a row of pills, the active one's text shows below */
-  .proj--tour .proj-visual { min-height: 760px; }
+  .proj--tour .proj-visual { min-height: calc(var(--dev-h) + 136px); }
   .tour-list {
     display: flex; gap: .5rem;
     margin: 1.75rem -40px 0; padding: 2px 40px;
@@ -1209,9 +1153,13 @@ html:not(.js) .statement-text .w,
   .proj-text { padding: 28px 28px 0; }
   .proj--featured .proj-text { padding: 32px 28px 0; }
   .proj--featured .proj-visual { min-height: 420px; }
-  .proj--tour .proj-visual { min-height: 660px; }
-  .phone { --w: 262px; border-radius: 50px; }
-  .phone-screen { border-radius: 40px; clip-path: inset(0 round 40px); }
+  .proj--tour { --w: 262px; }
+  .proj--tablet { --w: 318px; --bezel: 12px; }
+  .phone { border-radius: 50px; }
+  .phone-screen { --sr: 40px; }
+  .proj--tablet .phone { border-radius: 28px; }
+  .proj--tablet .phone-screen { --sr: 17px; }
+  .proj--tour .proj-visual { min-height: calc(var(--dev-h) + 120px); }
   .tour-list { margin: 1.5rem -28px 0; padding: 2px 28px; }
 
   .tk-row { grid-template-columns: 2.25rem 1fr; gap: .4rem 1rem; }
