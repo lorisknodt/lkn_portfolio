@@ -1,0 +1,11 @@
+{# VR Horror — endless corridor with a flickering door #}
+<div class="vv">
+  <svg class="vv-lines" viewBox="0 0 400 300" preserveAspectRatio="none">
+    <path d="M0 0L176 118M400 0L224 118M0 300L176 190M400 300L224 190"/>
+  </svg>
+  <div class="vv-tunnel">
+    {% for n in range(6) %}<span style="--i:{{ n }}"></span>{% endfor %}
+  </div>
+  <div class="vv-door"><span></span></div>
+  <div class="vv-fog"></div>
+</div>

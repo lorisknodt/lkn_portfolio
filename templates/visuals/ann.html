@@ -1,0 +1,35 @@
+{# ANN — feed-forward network with a looping forward pass #}
+{%- set layers = [3, 5, 5, 2] -%}
+{%- set gap = 46 -%}
+<div class="va">
+  <div class="v-glow"></div>
+  <svg viewBox="0 0 400 280" preserveAspectRatio="xMidYMid meet">
+    <g class="va-edges">
+      {%- for li in range(layers|length - 1) -%}
+      {%- set n1 = layers[li] -%}{%- set n2 = layers[li + 1] -%}
+      {%- for a in range(n1) -%}{%- for b in range(n2) -%}
+      <line x1="{{ 50 + li * 100 }}" y1="{{ 140 + (a - (n1 - 1) / 2) * gap }}" x2="{{ 150 + li * 100 }}" y2="{{ 140 + (b - (n2 - 1) / 2) * gap }}"/>
+      {%- endfor -%}{%- endfor -%}
+      {%- endfor -%}
+    </g>
+    <g class="va-pulses">
+      {%- for li in range(layers|length - 1) -%}
+      {%- set n1 = layers[li] -%}{%- set n2 = layers[li + 1] -%}
+      {%- for a in range(n1) -%}{%- for b in range(n2) -%}
+      {%- set w = (a * 7 + b * 3 + li * 5) % 10 -%}
+      {%- if w > 3 -%}
+      <line pathLength="100" style="--l:{{ li }}; --w:{{ w / 10 }}" x1="{{ 50 + li * 100 }}" y1="{{ 140 + (a - (n1 - 1) / 2) * gap }}" x2="{{ 150 + li * 100 }}" y2="{{ 140 + (b - (n2 - 1) / 2) * gap }}"/>
+      {%- endif -%}
+      {%- endfor -%}{%- endfor -%}
+      {%- endfor -%}
+    </g>
+    <g class="va-nodes">
+      {%- for li in range(layers|length) -%}
+      {%- set n = layers[li] -%}
+      {%- for a in range(n) -%}
+      <circle style="--l:{{ li }}" cx="{{ 50 + li * 100 }}" cy="{{ 140 + (a - (n - 1) / 2) * gap }}" r="9"/>
+      {%- endfor -%}
+      {%- endfor -%}
+    </g>
+  </svg>
+</div>

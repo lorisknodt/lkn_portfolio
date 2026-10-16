@@ -1,22 +1,54 @@
+import hashlib
+from datetime import date
+from functools import lru_cache
+from pathlib import Path
+
 from fastapi import FastAPI, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+
+class Static(StaticFiles):
+    """Media (videos, stills): cache long, URLs are versioned. CSS/JS: always revalidate (cheap 304s)."""
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        media = scope["path"].startswith("/static/media/") or scope["path"].startswith("/media/")
+        # Media URLs carry ?v=<content hash>, so they can be cached for good.
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if media else "no-cache"
+        return response
+
+
+class TextGZip(GZipMiddleware):
+    """Compress HTML/CSS/JS; leave video (range requests) untouched."""
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith("/static/media/"):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(TextGZip, minimum_size=1000)
+app.mount("/static", Static(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 data = {
     "name": "Loris Knodt",
     "title": "Computer Systems Architecture",
     "tagline": "Building systems at the edge of software & hardware.",
-    "about": (
-        "23-year-old student in the Master's in Computer Systems Architecture at HEPL, Liège. "
-        "I build things across mobile, AI, IoT and backend — "
-        "from neural networks and Kotlin apps to FastAPI backends and Flutter experiences. "
-        "Looking for a first opportunity starting January 2027."
+    "about": "23-year-old student in the Master's in Computer Systems Architecture at HEPL, Liège.",
+    # Scroll-driven statement below the hero. Words wrapped in *asterisks* get the accent gradient.
+    "statement": (
+        "I build things across mobile, AI, IoT and backend — from neural networks "
+        "and Kotlin apps to FastAPI backends and Flutter experiences. "
+        "I'm drawn to projects where *disciplines* *meet.*"
     ),
+    "tagline_highlight": "software & hardware",
+    "available": "January 2027",
     "contact": {
         "email": "loris.knodt@gmail.com",
         "phone": "+32 497 93 95 40",
@@ -34,6 +66,7 @@ data = {
     "projects": [
         {
             "id": "feastly",
+            "visual": "feastly", "accent": "#FE7603",
             "name": "Feastly",
             "tagline": "Find the right place for the right mood.",
             "description": (
@@ -46,9 +79,36 @@ data = {
             "highlights": ["134 commits", "Clean Architecture", "CI/CD", "Chatbot"],
             "github": "https://github.com/TonyVandeWiele/Feastly",
             "type": "Mobile · Team",
+            # Real screen recordings (static/media/feastly/<id>.mp4 + <id>-poster.webp),
+            # played as an auto-advancing tour on the project card.
+            "tour": [
+                {"id": "discover",   "title": "Discover",
+                 "text": "Places picked for you, from popular and nearby to food and drinks, one tab away."},
+                {"id": "chatbot",    "title": "Mood chatbot",
+                 "text": "Say how you feel. The bot asks a question or two, then suggests a spot."},
+                {"id": "onboarding", "title": "Taste onboarding",
+                 "text": "Swipe what you like and pick your cuisines, so recommendations fit from day one."},
+                {"id": "schedule",   "title": "Schedule",
+                 "text": "Plan an outing on the calendar, down to the minute."},
+                {"id": "darkmode",   "title": "Dark mode",
+                 "text": "A warm dark theme, one tap away in the profile."},
+                {"id": "language",   "title": "Three languages",
+                 "text": "English, French and Chinese, switched on the fly."},
+            ],
+            # Stills for the gallery in the project dialog (static/media/feastly/shot-<file>.webp).
+            "screens": [
+                {"file": "discover",         "alt": "Discover tab with nearby recommendations"},
+                {"file": "chatbot",          "alt": "Chatbot suggesting a bowling alley"},
+                {"file": "onboarding",       "alt": "Onboarding: swiping through activities you like"},
+                {"file": "onboarding-prefs", "alt": "Onboarding: picking favourite cuisines"},
+                {"file": "schedule",         "alt": "Schedule with the time picker open"},
+                {"file": "darkmode",         "alt": "Profile screen with the theme switch"},
+                {"file": "language",         "alt": "Language picker: English, French, Chinese"},
+            ],
         },
         {
             "id": "iot2",
+            "visual": "shop", "accent": "#A97BFF",
             "name": "CLM Shop",
             "tagline": "Full e-commerce Android app with 3DSecure.",
             "description": (
@@ -60,9 +120,31 @@ data = {
             "highlights": ["28 commits", "MVVM", "3DSecure", "Retrofit"],
             "github": "https://github.com/lorisknodt/iot2_clm",
             "type": "Android · Solo",
+            "device": "tablet",  # recordings are 800×1200, shown in a tablet frame
+            "tour": [
+                {"id": "shop",     "title": "Shop",
+                 "text": "Browse by category, open a product, add it to the cart."},
+                {"id": "checkout", "title": "Checkout",
+                 "text": "Pick a saved address or enter a new one, with delivery instructions."},
+                {"id": "payment",  "title": "3-D Secure payment",
+                 "text": "Card payment through a secure web flow, confirmed in the app."},
+                {"id": "orders",   "title": "Orders",
+                 "text": "Order history with live status. Open one, cancel it if it has not shipped."},
+            ],
+            "screens": [
+                {"file": "products", "alt": "Product list with category filters"},
+                {"file": "product",  "alt": "Product detail with the add-to-cart button"},
+                {"file": "cart",     "alt": "Cart with quantity controls and total"},
+                {"file": "checkout", "alt": "Checkout: delivery address and instructions"},
+                {"file": "payment",  "alt": "3-D Secure card payment form"},
+                {"file": "success",  "alt": "Payment confirmed screen"},
+                {"file": "orders",   "alt": "Order history with delivery statuses"},
+                {"file": "cancel",   "alt": "Order detail with the cancel confirmation"},
+            ],
         },
         {
             "id": "ann",
+            "visual": "ann", "accent": "#FF8A3D",
             "name": "ANN — Neural Network",
             "tagline": "Trained & optimized Keras neural network.",
             "description": (
@@ -77,6 +159,7 @@ data = {
         },
         {
             "id": "vr",
+            "visual": "vr", "accent": "#3DDC84",
             "name": "VR Horror Game",
             "tagline": "Immersive VR horror experience in Unity.",
             "description": (
@@ -136,6 +219,47 @@ data = {
 }
 
 
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@lru_cache(maxsize=16)
+def _content_hash(folder: Path, signature: tuple) -> str:
+    digest = hashlib.sha1()
+    for rel, *_ in signature:
+        digest.update(rel.encode())
+        digest.update((folder / rel).read_bytes())
+    return digest.hexdigest()[:10]
+
+
+def asset_version(folder: Path) -> str:
+    """Short hash of a folder's files, appended to URLs (?v=) so they can be cached long.
+
+    Based on content, not dates: a fresh checkout (e.g. on GitHub Actions) keeps the same
+    version as long as nothing changed. Re-hashes only when a name, size or mtime changes.
+    """
+    signature = tuple(sorted(
+        (str(f.relative_to(folder)), f.stat().st_size, f.stat().st_mtime_ns)
+        for f in folder.rglob("*") if f.is_file()
+    ))
+    return _content_hash(folder, signature)
+
+
+def view_data() -> dict:
+    """Derive the small presentation helpers the template needs from `data`."""
+    before, hl, after = data["tagline"].partition(data["tagline_highlight"])
+    return {
+        **data,
+        "tagline_parts": (before, hl, after),
+        "statement_words": [
+            {"text": w.strip("*"), "hl": w.startswith("*")}
+            for w in data["statement"].split()
+        ],
+        "year": date.today().year,
+        "media_v": asset_version(STATIC_DIR / "media"),
+        "code_v": asset_version(STATIC_DIR / "css")[:5] + asset_version(STATIC_DIR / "js")[:5],
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, **data})
+    return templates.TemplateResponse(request, "index.html", view_data())
