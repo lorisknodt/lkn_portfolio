@@ -5,9 +5,9 @@
     <div class="phone-screen">
       {% for c in p.tour %}
       <video class="tour-video{% if loop.first %} is-active{% endif %}" muted playsinline disablepictureinpicture preload="none" tabindex="-1"
-             data-src="/static/media/{{ p.id }}/{{ c.id }}" data-v="{{ media_v }}" data-poster="/static/media/{{ p.id }}/{{ c.id }}-poster.webp?v={{ media_v }}"></video>
+             data-src="static/media/{{ p.id }}/{{ c.id }}" data-v="{{ media_v }}" data-poster="static/media/{{ p.id }}/{{ c.id }}-poster.webp?v={{ media_v }}"></video>
       {% endfor %}
-      <noscript><img class="tour-video is-active" src="/static/media/{{ p.id }}/{{ p.tour[0].id }}-poster.webp?v={{ media_v }}" alt=""/></noscript>
+      <noscript><img class="tour-video is-active" src="static/media/{{ p.id }}/{{ p.tour[0].id }}-poster.webp?v={{ media_v }}" alt=""/></noscript>
     </div>
   </div>
   <button class="tour-toggle" type="button" aria-label="Pause the {{ p.name }} demo">

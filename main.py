@@ -1,4 +1,6 @@
+import hashlib
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -14,7 +16,7 @@ class Static(StaticFiles):
     def file_response(self, full_path, stat_result, scope, status_code=200):
         response = super().file_response(full_path, stat_result, scope, status_code)
         media = scope["path"].startswith("/static/media/") or scope["path"].startswith("/media/")
-        # Media URLs carry ?v=<media_version()>, so they can be cached for good.
+        # Media URLs carry ?v=<content hash>, so they can be cached for good.
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if media else "no-cache"
         return response
 
@@ -217,13 +219,29 @@ data = {
 }
 
 
-MEDIA_DIR = Path(__file__).parent / "static" / "media"
+STATIC_DIR = Path(__file__).parent / "static"
 
 
-def media_version() -> str:
-    """Newest modification time under static/media, appended to media URLs (?v=) to bust caches."""
-    stamps = [f.stat().st_mtime for f in MEDIA_DIR.rglob("*") if f.is_file()]
-    return format(int(max(stamps, default=0)), "x")
+@lru_cache(maxsize=16)
+def _content_hash(folder: Path, signature: tuple) -> str:
+    digest = hashlib.sha1()
+    for rel, *_ in signature:
+        digest.update(rel.encode())
+        digest.update((folder / rel).read_bytes())
+    return digest.hexdigest()[:10]
+
+
+def asset_version(folder: Path) -> str:
+    """Short hash of a folder's files, appended to URLs (?v=) so they can be cached long.
+
+    Based on content, not dates: a fresh checkout (e.g. on GitHub Actions) keeps the same
+    version as long as nothing changed. Re-hashes only when a name, size or mtime changes.
+    """
+    signature = tuple(sorted(
+        (str(f.relative_to(folder)), f.stat().st_size, f.stat().st_mtime_ns)
+        for f in folder.rglob("*") if f.is_file()
+    ))
+    return _content_hash(folder, signature)
 
 
 def view_data() -> dict:
@@ -237,7 +255,8 @@ def view_data() -> dict:
             for w in data["statement"].split()
         ],
         "year": date.today().year,
-        "media_v": media_version(),
+        "media_v": asset_version(STATIC_DIR / "media"),
+        "code_v": asset_version(STATIC_DIR / "css")[:5] + asset_version(STATIC_DIR / "js")[:5],
     }
 
 

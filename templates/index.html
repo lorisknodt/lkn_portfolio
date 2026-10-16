@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"/>
-  <link rel="stylesheet" href="/static/css/style.css"/>
+  <link rel="stylesheet" href="static/css/style.css?v={{ code_v }}"/>
 </head>
 <body id="top">
 
@@ -378,7 +378,7 @@
     <div class="modal-visual modal-screens">
       <div class="screens" tabindex="0" role="group" aria-label="{{ p.name }} screens">
         {% for sc in p.screens %}
-        <img src="/static/media/{{ p.id }}/shot-{{ sc.file }}.webp?v={{ media_v }}" alt="{{ sc.alt }}" width="420" height="{{ 630 if p.device == 'tablet' else 910 }}" loading="lazy" decoding="async"/>
+        <img src="static/media/{{ p.id }}/shot-{{ sc.file }}.webp?v={{ media_v }}" alt="{{ sc.alt }}" width="420" height="{{ 630 if p.device == 'tablet' else 910 }}" loading="lazy" decoding="async"/>
         {% endfor %}
       </div>
       <div class="screens-nav">
@@ -421,6 +421,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="/static/js/main.js"></script>
+<script type="module" src="static/js/main.js?v={{ code_v }}"></script>
 </body>
 </html>

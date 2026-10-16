@@ -12,6 +12,20 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+## Mise en ligne (GitHub Pages)
+
+Le site n'a pas de logique serveur : `python build.py` génère une version statique dans `dist/`
+(`index.html` + `static/`). Le workflow `.github/workflows/pages.yml` le fait automatiquement
+et publie sur GitHub Pages à chaque push sur `main`.
+
+1. **Settings → Pages → Build and deployment → Source : GitHub Actions** (une seule fois)
+2. Push sur `main` → le site est en ligne sur `https://lorisknodt.github.io/lkn_portfolio/`
+3. Domaine perso : **Settings → Pages → Custom domain** + enregistrements DNS chez le registrar
+   (voir la doc GitHub « Managing a custom domain for your GitHub Pages site »)
+
+Les URL des fichiers sont relatives et versionnées (`?v=` = empreinte du contenu) :
+le même `dist/` fonctionne à la racine d'un domaine comme sous `/lkn_portfolio/`.
+
 ## Fonctionnalités
 
 - 🌌 Hero avec champ lumineux WebGL (shader maison, aucune librairie externe)
